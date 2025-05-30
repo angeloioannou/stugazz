@@ -1,0 +1,182 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<html>
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+  <meta http-equiv="Content-Style-Type" content="text/css">
+  <title></title>
+  <meta name="Generator" content="Cocoa HTML Writer">
+  <meta name="CocoaVersion" content="2113.65">
+  <style type="text/css">
+    p.p1 {margin: 0.0px 0.0px 0.0px 0.0px; font: 12.0px Helvetica}
+    p.p2 {margin: 0.0px 0.0px 0.0px 0.0px; font: 12.0px Helvetica; min-height: 14.0px}
+  </style>
+</head>
+<body>
+<p class="p1">// Base canvas setup and variables</p>
+<p class="p1">const canvas = document.getElementById('gameCanvas');</p>
+<p class="p1">const ctx = canvas.getContext('2d');</p>
+<p class="p2"><br></p>
+<p class="p1">let player = {</p>
+<p class="p1"><span class="Apple-converted-space">  </span>x: 50,</p>
+<p class="p1"><span class="Apple-converted-space">  </span>y: canvas.height - 100,</p>
+<p class="p1"><span class="Apple-converted-space">  </span>width: 30,</p>
+<p class="p1"><span class="Apple-converted-space">  </span>height: 30,</p>
+<p class="p1"><span class="Apple-converted-space">  </span>velocityY: 0,</p>
+<p class="p1"><span class="Apple-converted-space">  </span>jumping: false,</p>
+<p class="p1"><span class="Apple-converted-space">  </span>speed: 3</p>
+<p class="p1">};</p>
+<p class="p2"><br></p>
+<p class="p1">let gravity = 0.5;</p>
+<p class="p1">let platforms = [];</p>
+<p class="p1">let powerUps = [];</p>
+<p class="p1">let obstacles = [];</p>
+<p class="p1">let score = 0;</p>
+<p class="p1">let starsCollected = 0;</p>
+<p class="p1">let comboCount = 0;</p>
+<p class="p1">let level = 1;</p>
+<p class="p1">const achievements = [</p>
+<p class="p1"><span class="Apple-converted-space">  </span>{ name: 'First Jump', condition: () =&gt; score &gt;= 10 },</p>
+<p class="p1"><span class="Apple-converted-space">  </span>{ name: 'Star Collector', condition: () =&gt; starsCollected &gt;= 50 }</p>
+<p class="p1">];</p>
+<p class="p2"><br></p>
+<p class="p1">const jumpSound = new Audio('jump.mp3');</p>
+<p class="p1">const collectSound = new Audio('collect.mp3');</p>
+<p class="p2"><br></p>
+<p class="p1">function playJumpSound() {</p>
+<p class="p1"><span class="Apple-converted-space">  </span>jumpSound.play();</p>
+<p class="p1">}</p>
+<p class="p2"><br></p>
+<p class="p1">function playCollectSound() {</p>
+<p class="p1"><span class="Apple-converted-space">  </span>collectSound.play();</p>
+<p class="p1">}</p>
+<p class="p2"><br></p>
+<p class="p1">function generatePlatform() {</p>
+<p class="p1"><span class="Apple-converted-space">  </span>const platformWidth = Math.random() * (150 - 50) + 50;</p>
+<p class="p1"><span class="Apple-converted-space">  </span>const platformX = canvas.width;</p>
+<p class="p1"><span class="Apple-converted-space">  </span>const platformY = Math.random() * (canvas.height - 200) + 100;</p>
+<p class="p1"><span class="Apple-converted-space">  </span>platforms.push({ x: platformX, y: platformY, width: platformWidth, height: 10 });</p>
+<p class="p1">}</p>
+<p class="p2"><br></p>
+<p class="p1">function generatePowerUp() {</p>
+<p class="p1"><span class="Apple-converted-space">  </span>const powerUpTypes = ['speed', 'shield', 'doublePoints'];</p>
+<p class="p1"><span class="Apple-converted-space">  </span>const type = powerUpTypes[Math.floor(Math.random() * powerUpTypes.length)];</p>
+<p class="p1"><span class="Apple-converted-space">  </span>powerUps.push({ x: canvas.width, y: Math.random() * canvas.height, type });</p>
+<p class="p1">}</p>
+<p class="p2"><br></p>
+<p class="p1">function generateObstacle() {</p>
+<p class="p1"><span class="Apple-converted-space">  </span>const obstacleY = Math.random() * (canvas.height - 50);</p>
+<p class="p1"><span class="Apple-converted-space">  </span>obstacles.push({ x: canvas.width, y: obstacleY, width: 20, height: 50 });</p>
+<p class="p1">}</p>
+<p class="p2"><br></p>
+<p class="p1">function updateCombo(success) {</p>
+<p class="p1"><span class="Apple-converted-space">  </span>if (success) {</p>
+<p class="p1"><span class="Apple-converted-space">    </span>comboCount++;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>score += comboCount * 10;</p>
+<p class="p1"><span class="Apple-converted-space">  </span>} else {</p>
+<p class="p1"><span class="Apple-converted-space">    </span>comboCount = 0;</p>
+<p class="p1"><span class="Apple-converted-space">  </span>}</p>
+<p class="p1">}</p>
+<p class="p2"><br></p>
+<p class="p1">function checkAchievements() {</p>
+<p class="p1"><span class="Apple-converted-space">  </span>achievements.forEach(achievement =&gt; {</p>
+<p class="p1"><span class="Apple-converted-space">    </span>if (achievement.condition() &amp;&amp; !achievement.unlocked) {</p>
+<p class="p1"><span class="Apple-converted-space">      </span>achievement.unlocked = true;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>alert(`Achievement Unlocked: ${achievement.name}`);</p>
+<p class="p1"><span class="Apple-converted-space">    </span>}</p>
+<p class="p1"><span class="Apple-converted-space">  </span>});</p>
+<p class="p1">}</p>
+<p class="p2"><br></p>
+<p class="p1">function increaseDifficulty() {</p>
+<p class="p1"><span class="Apple-converted-space">  </span>player.speed += 0.5;</p>
+<p class="p1"><span class="Apple-converted-space">  </span>gravity += 0.05;</p>
+<p class="p1">}</p>
+<p class="p2"><br></p>
+<p class="p1">function changeBackground() {</p>
+<p class="p1"><span class="Apple-converted-space">  </span>const backgrounds = ['bg1.png', 'bg2.png', 'bg3.png'];</p>
+<p class="p1"><span class="Apple-converted-space">  </span>document.body.style.backgroundImage = `url(${backgrounds[level % backgrounds.length]})`;</p>
+<p class="p1">}</p>
+<p class="p2"><br></p>
+<p class="p1">function checkLevelUp() {</p>
+<p class="p1"><span class="Apple-converted-space">  </span>if (score &gt;= level * 100) {</p>
+<p class="p1"><span class="Apple-converted-space">    </span>level++;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>increaseDifficulty();</p>
+<p class="p1"><span class="Apple-converted-space">    </span>changeBackground();</p>
+<p class="p1"><span class="Apple-converted-space">  </span>}</p>
+<p class="p1">}</p>
+<p class="p2"><br></p>
+<p class="p1">function resizeCanvas() {</p>
+<p class="p1"><span class="Apple-converted-space">  </span>canvas.width = window.innerWidth;</p>
+<p class="p1"><span class="Apple-converted-space">  </span>canvas.height = window.innerHeight;</p>
+<p class="p1">}</p>
+<p class="p2"><br></p>
+<p class="p1">function gameLoop() {</p>
+<p class="p1"><span class="Apple-converted-space">  </span>ctx.clearRect(0, 0, canvas.width, canvas.height);</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">  </span>// Gravity and movement</p>
+<p class="p1"><span class="Apple-converted-space">  </span>player.velocityY += gravity;</p>
+<p class="p1"><span class="Apple-converted-space">  </span>player.y += player.velocityY;</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">  </span>if (player.y &gt; canvas.height - player.height) {</p>
+<p class="p1"><span class="Apple-converted-space">    </span>player.y = canvas.height - player.height;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>player.jumping = false;</p>
+<p class="p1"><span class="Apple-converted-space">  </span>}</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">  </span>// Draw player</p>
+<p class="p1"><span class="Apple-converted-space">  </span>ctx.fillStyle = 'blue';</p>
+<p class="p1"><span class="Apple-converted-space">  </span>ctx.fillRect(player.x, player.y, player.width, player.height);</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">  </span>// Platforms</p>
+<p class="p1"><span class="Apple-converted-space">  </span>platforms.forEach((plat, index) =&gt; {</p>
+<p class="p1"><span class="Apple-converted-space">    </span>plat.x -= player.speed;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>ctx.fillStyle = 'green';</p>
+<p class="p1"><span class="Apple-converted-space">    </span>ctx.fillRect(plat.x, plat.y, plat.width, plat.height);</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">    </span>// Collision detection</p>
+<p class="p1"><span class="Apple-converted-space">    </span>if (</p>
+<p class="p1"><span class="Apple-converted-space">      </span>player.x &lt; plat.x + plat.width &amp;&amp;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>player.x + player.width &gt; plat.x &amp;&amp;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>player.y + player.height &lt; plat.y + 10 &amp;&amp;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>player.y + player.height &gt; plat.y</p>
+<p class="p1"><span class="Apple-converted-space">    </span>) {</p>
+<p class="p1"><span class="Apple-converted-space">      </span>player.y = plat.y - player.height;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>player.jumping = false;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>player.velocityY = 0;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>}</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">    </span>if (plat.x + plat.width &lt; 0) platforms.splice(index, 1);</p>
+<p class="p1"><span class="Apple-converted-space">  </span>});</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">  </span>// Spawn logic</p>
+<p class="p1"><span class="Apple-converted-space">  </span>if (Math.random() &lt; 0.02) generatePlatform();</p>
+<p class="p1"><span class="Apple-converted-space">  </span>if (Math.random() &lt; 0.01) generatePowerUp();</p>
+<p class="p1"><span class="Apple-converted-space">  </span>if (Math.random() &lt; 0.015) generateObstacle();</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">  </span>// Update level</p>
+<p class="p1"><span class="Apple-converted-space">  </span>checkLevelUp();</p>
+<p class="p1"><span class="Apple-converted-space">  </span>checkAchievements();</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">  </span>requestAnimationFrame(gameLoop);</p>
+<p class="p1">}</p>
+<p class="p2"><br></p>
+<p class="p1">window.addEventListener('resize', resizeCanvas);</p>
+<p class="p1">resizeCanvas();</p>
+<p class="p2"><br></p>
+<p class="p1">document.addEventListener('keydown', (e) =&gt; {</p>
+<p class="p1"><span class="Apple-converted-space">  </span>if (e.code === 'Space' &amp;&amp; !player.jumping) {</p>
+<p class="p1"><span class="Apple-converted-space">    </span>player.velocityY = -10;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>player.jumping = true;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>playJumpSound();</p>
+<p class="p1"><span class="Apple-converted-space">  </span>}</p>
+<p class="p1">});</p>
+<p class="p2"><br></p>
+<p class="p1">canvas.addEventListener('touchstart', function(e) {</p>
+<p class="p1"><span class="Apple-converted-space">  </span>if (!player.jumping) {</p>
+<p class="p1"><span class="Apple-converted-space">    </span>player.velocityY = -10;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>player.jumping = true;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>playJumpSound();</p>
+<p class="p1"><span class="Apple-converted-space">  </span>}</p>
+<p class="p1">});</p>
+<p class="p2"><br></p>
+<p class="p1">gameLoop();</p>
+</body>
+</html>
